@@ -1,13 +1,11 @@
-from sportsipy.nba.boxscore import Boxscore
+import pandas as pd
 from dash import dcc, Dash, html
 import plotly.express as px
 
-game_data = Boxscore('201806080CLE')
 
-df = game_data.dataframe
-print(df.columns)
+df = pd.read_csv('playerInfo2018.csv')
 app = Dash(__name__)
-fig = px.bar(df, x="home_three_point_field_goal_attempts", y="home_points", color="winning_name", barmode="group")
+fig = px.histogram(df['field_goals'])
 app.layout = html.Div(children=[
 
     html.Div(children='''
@@ -19,6 +17,9 @@ app.layout = html.Div(children=[
     )
 ])
 
+fig.show()
+
 if __name__ == '__main__':
+    exit()
     app.run_server(debug=True)
 
