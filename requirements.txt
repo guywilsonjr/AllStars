@@ -38,7 +38,7 @@ lxml==4.8.0
     # via pyquery
 markupsafe==2.1.0
     # via jinja2
-numpy==1.22.2
+numpy==1.22.3
     # via pandas
 pandas==1.4.1
     # via sportsipy

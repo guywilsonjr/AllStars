@@ -83,5 +83,5 @@ class DCCGraph:
 
 if __name__ == '__main__':
     graph = DCCGraph(df, default_view)
-    graph.app.run_server(debug=True)
+    graph.app.run_server(debug=True, port=9999)
 
