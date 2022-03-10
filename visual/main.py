@@ -3,31 +3,33 @@ import logging
 import os
 import sys
 from typing import Dict, List
+
+import pandas
 from icecream import ic
 import pandas as pd
 import plotly as plotly
 from dash import dcc, Dash, html, Input, Output
 import plotly.express as px
+import plotly.graph_objects as go
 
 
-logging.basicConfig()
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.StreamHandler(sys.stdout))
-# logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
-ic.configureOutput(includeContext=True, outputFunction=logger.info)
+def setup_logging():
+    logging.basicConfig()
+    logger = logging.getLogger(__name__)
+    ic.configureOutput(includeContext=True, outputFunction=logger.info)
+    logger.addHandler(logging.StreamHandler(sys.stdout))
+    return logger
+    # logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
+
+logger = setup_logging()
 df: pd.DataFrame = pd.read_csv('playerInfo2018.csv')
 dropdown_label_key: str = 'label'
 dropdown_value_key: str = 'value'
 default_view: str = 'points'
-env_pers_type: str = 'PERSISTENCE_TYPE'
-env_pers: str = 'PERSISTENCE'
-persistence_type: str = os.environ[env_pers_type] if env_pers_type in os.environ else 'local'
-persistence_type: str = os.environ[env_pers] if env_pers in os.environ else True
 
 
 class DCCGraph:
     app: Dash
-    fig_cache: Dict[str, plotly.graph_objs.Figure]
     df: pd.DataFrame
     dropdown_component: dcc.Dropdown
     dropdown_options: List[Dict[str, str]]
@@ -52,12 +54,23 @@ class DCCGraph:
         )
         def update_dropdown(dropdown_selection: str) -> plotly.graph_objs.Figure:
             ic(f'Updating output after receiving dropdown value: {dropdown_selection}')
-            hist_title = f'{dropdown_selection} Distribution'.replace('_', ' ').title()
-            return px.histogram(
-                data_frame=df[dropdown_selection],
-                title=hist_title,
-                log_y=True
-            )
+            return self.create_histogram(col=dropdown_selection)
+
+    def create_histogram(self, col: str, percentile: int=66):
+        # TODO: create variable size partitions
+        column_data: pandas.Series = self.df[col]
+        hist_title = f'{col} Distribution'.replace('_', ' ').title()
+
+        half_quantile = column_data.quantile(.5)
+        first_half = df[df[col] < half_quantile][col]
+        second_half = df[df[col] >= half_quantile][col]
+
+        fig = go.Figure()
+        fig.add_trace(go.Histogram(x=first_half))
+        fig.add_trace(go.Histogram(x=second_half))
+
+        fig.update_layout(barmode='stack')
+        return fig
 
     def setup_layout(self) -> None:
         default_fig = px.histogram(df[self.default_col])
