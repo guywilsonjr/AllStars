@@ -1,10 +1,10 @@
-import functools
+import functools  # Use functools.lru_cache implements a simple hashmap as a cache
 import logging
 import sys
-from typing import Dict, List
+from typing import Dict, List  # For using typehints: https://docs.python.org/3/library/typing.html
 
 import pandas
-from icecream import ic
+from icecream import ic  # https://github.com/gruns/icecream
 import pandas as pd
 import plotly as plotly
 from dash import dcc, Dash, html, Input, Output
@@ -13,19 +13,28 @@ import plotly.graph_objects as go
 
 
 def setup_logging():
+    """
+    Required for basic logging setup
+    https://docs.python.org/3/howto/logging.html#logging-basic-tutorial
+    """
     logging.basicConfig()
     logger = logging.getLogger(__name__)
     ic.configureOutput(includeContext=True, outputFunction=logger.info)
-    logger.addHandler(logging.StreamHandler(sys.stdout))
+    logger.addHandler(logging.StreamHandler(sys.stdout))  # send logging to stdout
     return logger
-    # logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
 
 logger = setup_logging()
 df: pd.DataFrame = pd.read_csv('playerInfo2018.csv')
 
 
+"""
+Constants for Dash dropdown component
+https://dash.plotly.com/dash-core-components/dropdown
+"""
 dropdown_label_key: str = 'label'
 dropdown_value_key: str = 'value'
+
+
 default_feature: str = 'points'
 
 
@@ -68,7 +77,7 @@ class MainApplication:
         default_fig = px.histogram(df[self.default_col])
         self.app = Dash(__name__)
         self.app.layout = html.Div(children=[
-            html.Div(children='''Rising Stars'''),
+            html.Div(children='''Survey Responses at'''),
             dcc.Graph(
                 id='hist',
                 figure=default_fig
@@ -77,7 +86,17 @@ class MainApplication:
         ])
 
     def setup_dropdown(self) -> None:
-        self.dropdown_options = [{dropdown_label_key: col, dropdown_value_key: col} for i, col in enumerate(self.df.columns)]
+        """
+        See: https://dash.plotly.com/dash-core-components/dropdown
+
+        Setup dropdown options as list of dictionary like:
+        [{'label': 'points', 'value': 'points'}}
+        using list comprehension
+        https://www.geeksforgeeks.org/python-list-comprehension/
+        https://docs.python.org/3/library/functions.html?highlight=enumerate#enumerate
+
+        """
+        self.dropdown_options: List[Dict[str, str]] = [{dropdown_label_key: col, dropdown_value_key: col} for col in df.columns]
         self.dropdown_component = dcc.Dropdown(
             id=self.dropdown_id,
             value=self.default_col,
@@ -88,12 +107,8 @@ class MainApplication:
     def create_histogram(self, col: str, percentile: int = 66):
         '''
         Create Histogram
-        :param col: name of column to be used to display histogram
-        :type col: string
-        :param percentile:
-        :type percentile:
-        :return:
-        :rtype:
+        Currently not using percentile parameter
+        Splits df into halfs and add traces
         '''
         # TODO: create variable size partitions
         column_data: pandas.Series = self.df[col]
