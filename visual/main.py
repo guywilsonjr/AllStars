@@ -1,11 +1,18 @@
-import functools  # Use functools.lru_cache implements a simple hashmap as a cache
+# Use functools.lru_cache implements a simple hashmap as a cache
+import functools
+# Sys needed to do logging correctly. why do logging? https://stackoverflow.com/questions/6918493/in-python-why-use-logging-instead-of-print
 import logging
 import sys
-from typing import Dict, List  # For using typehints: https://docs.python.org/3/library/typing.html
-
-import pandas
-from icecream import ic  # https://github.com/gruns/icecream
+# icream logging even better https://github.com/gruns/icecream
+from icecream import ic
+# For using typehints: https://docs.python.org/3/library/typing.html
+from typing import Dict, List
 import pandas as pd
+
+# Use Plotly and Dash for nice visuals
+# Plotly: https://plotly.com/python/
+# Dash: https://dash.plotly.com/installation
+# Same company makes Plotly and Dash. Plotly for Open source pretty plots. Dash for dashboards containing plots.
 import plotly as plotly
 from dash import dcc, Dash, html, Input, Output
 import plotly.express as px
@@ -111,7 +118,7 @@ class MainApplication:
         Splits df into halfs and add traces
         '''
         # TODO: create variable size partitions
-        column_data: pandas.Series = self.df[col]
+        column_data: pd.Series = self.df[col]
         hist_title = f'{col} Distribution'.replace('_', ' ').title()
 
         half_quantile = column_data.quantile(.5)
@@ -130,6 +137,7 @@ class MainApplication:
         self.initialize(df, default_col)
 
 
+# Unnecessary, but good practice. See stack overflow for why
 if __name__ == '__main__':
     graph = MainApplication(df, default_feature)
     graph.app.run_server(debug=True, port=9999)
