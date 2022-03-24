@@ -38,17 +38,11 @@ or
 
 ## Non-Development Instructions for Server start
 We make use of the **important** screen to keep our terminal session commands from dying when we disconnect. [Why we use screen and why it's important!](https://linuxize.com/post/how-to-use-linux-screen/)
-1. Run steps 1-3 of the Development setup
-2. Check to see if a screen session is already running:
-`screen -ls`
-The output should either be no other screens running or something starting with the **5-digit** SESSION_ID:
-`[SESSION_ID].pts-0.linuxize-desktop   (Detached)`
-ex:
-`10835.pts-0.linuxize-desktop   (Detached)`
-
-3. If the screen session already exists go into it:
-`screen -r [SESSION_ID]`
-4. Start the program in sudo mode so we can also use port 80
-
-5. 
-
+**For only code updates skip to last step**
+2. Run steps 1-3 of the Development setup
+3. [Only needed once]Move the service config file called `allstars.service` to the folder `/etc/systemd/system`. The command **might** be something like:
+`sudo cp allstars.service /etc/systemd/system`
+4. Refresh systemd whenever you make a change to the file and want to update that file
+`sudo systemctl daemon-reload`
+5. Start the service
+`sudo service allstars restart`

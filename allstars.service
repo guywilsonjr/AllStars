@@ -1,0 +1,7 @@
+[Unit]
+Description=Run the allstars Server
+After=network.target
+[Service]
+User=ubuntu
+ExecStart=/home/ubuntu/repos/AllStars/.venv/bin/python /home/ubuntu/repos/AllStars/visual/main.py
+AmbientCapabilities=CAP_NET_BIND_SERVICE
