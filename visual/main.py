@@ -1,3 +1,4 @@
+import os
 # Use functools.lru_cache implements a simple hashmap as a cache
 import functools
 # Sys needed to do logging correctly. why do logging? https://stackoverflow.com/questions/6918493/in-python-why-use-logging-instead-of-print
@@ -18,6 +19,10 @@ from dash import dcc, Dash, html, Input, Output
 import plotly.express as px
 import plotly.graph_objects as go
 
+# Get current directory
+dir_path = os.path.dirname(os.path.realpath(__file__))
+initial_default_file_path = dir_path + '/playerInfo2018.csv'
+
 
 def setup_logging():
     """
@@ -31,7 +36,7 @@ def setup_logging():
     return logger
 
 logger = setup_logging()
-df: pd.DataFrame = pd.read_csv('playerInfo2018.csv')
+df: pd.DataFrame = pd.read_csv(initial_default_file_path)
 
 
 """
