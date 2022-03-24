@@ -21,7 +21,7 @@ import plotly.graph_objects as go
 
 # Get current directory
 dir_path = os.path.dirname(os.path.realpath(__file__))
-initial_default_file_path = dir_path + '/playerInfo2018.csv'
+initial_default_file_path = dir_path + '/../playerInfo2018.csv'
 
 
 def setup_logging():
