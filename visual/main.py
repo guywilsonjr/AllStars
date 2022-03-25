@@ -145,5 +145,5 @@ class MainApplication:
 # Unnecessary, but good practice. See stack overflow for why
 if __name__ == '__main__':
     graph = MainApplication(df, default_feature)
-    graph.app.run_server(debug=True, port=80)
+    graph.app.run_server(debug=True, port=8080)
 
