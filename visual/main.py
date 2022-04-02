@@ -143,10 +143,12 @@ class MainApplication:
 
 
 graph = MainApplication(df, default_feature)
+graph.app.css.config.serve_locally = True
 
 # Unnecessary, but good practice. See stack overflow for why
 if __name__ == '__main__':
     graph.app.run_server(debug=True, port=80)
 else:
     server = graph.app.server
+
 
