@@ -142,8 +142,11 @@ class MainApplication:
         self.initialize(df, default_col)
 
 
+graph = MainApplication(df, default_feature)
+
 # Unnecessary, but good practice. See stack overflow for why
 if __name__ == '__main__':
-    graph = MainApplication(df, default_feature)
-    graph.app.run_server(debug=True, port=8080)
+    graph.app.run_server(debug=True, port=80)
+else:
+    server = graph.app.server
 
