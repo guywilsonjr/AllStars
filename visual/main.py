@@ -1,6 +1,4 @@
 import os
-# Use functools.lru_cache implements a simple hashmap as a cache
-import functools
 # Sys needed to do logging correctly. why do logging? https://stackoverflow.com/questions/6918493/in-python-why-use-logging-instead-of-print
 import logging
 import sys
@@ -20,6 +18,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # Get current directory
+from visual.clustering import clustering_label, clustering_id
+from visual.distributions import distributions_id, distributions_label
+
 dir_path = os.path.dirname(os.path.realpath(__file__))
 initial_default_file_path = dir_path + '/../playerInfo2018.csv'
 
@@ -70,32 +71,55 @@ class MainApplication:
     dropdown_component: dcc.Dropdown
     dropdown_options: List[Dict[str, str]]
     dropdown_id: str = 'dropdown'
+    dropdown_selection: str
     hist_id: str = 'hist'
+
+    def setup_layout(self) -> None:
+        self.app = Dash(__name__)
+
 
     def initialize(self, df: pd.DataFrame, default_col: str):
         self.df = df
         self.default_col = default_col
         self.setup_dropdown()
         self.setup_layout()
+        default_fig = px.histogram(df[self.default_col])
+
+        self.app.layout = html.Div(
+            children=[
+                html.Div(children=[
+                    dcc.Tabs(
+                        id="window",
+                        value='windowlabel',
+                        children=[
+                            dcc.Tab(
+                                id=distributions_id,
+                                label=distributions_label,
+                                children=[
+                                    dcc.Graph(
+                                        id='hist',
+                                        figure=default_fig),
+                                   self.dropdown_component]),
+                                ]
+                        ),
+                html.Div(id='tabs-content', children=[])])])
 
         # This is the trigger function that updates the graph on dropdown change
-        @functools.lru_cache
         @self.app.callback(Output(component_id='hist', component_property='figure'), Input(component_id='dropdown', component_property='value'))
         def trigger_update_on_dropdown_change(dropdown_selection: str) -> plotly.graph_objs.Figure:
-            ic(f'Updating output after receiving dropdown value: {dropdown_selection}')
-            return self.create_histogram(col=dropdown_selection)
+            self.dropdown_selection = dropdown_selection
 
-    def setup_layout(self) -> None:
-        default_fig = px.histogram(df[self.default_col])
-        self.app = Dash(__name__)
-        self.app.layout = html.Div(children=[
-            html.Div(children='''Survey Responses at'''),
-            dcc.Graph(
-                id='hist',
-                figure=default_fig
-            ),
-            self.dropdown_component
-        ])
+            ic(f'Updating output after receiving dropdown value: {dropdown_selection}')
+            return self.create_histogram(dropdown_selection)
+
+        @self.app.callback(Output(component_id='hist', component_property='style'),
+                           Input(component_id='window', component_property='value'))
+        def trigger_update_on_tab_switch(tab: str) -> plotly.graph_objs.Figure:
+            default_fig = px.histogram(df[self.default_col])
+
+            ic(f'Updating output after receiving tab value: {tab}')
+            return dcc.Graph(figure=default_fig)
+
 
     def setup_dropdown(self) -> None:
         """
@@ -147,7 +171,7 @@ graph.app.css.config.serve_locally = True
 
 # Unnecessary, but good practice. See stack overflow for why
 if __name__ == '__main__':
-    graph.app.run_server(debug=True, port=80)
+    graph.app.run_server(debug=True, port=8080)
 else:
     server = graph.app.server
 
