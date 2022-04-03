@@ -28,7 +28,7 @@ class Distributions(BaseModel):
     Graphing Constants 
     '''
 
-    _label: Final[str] = 'Distributions'
+    _label: Final[str] = 'Histograms'
     _tab_id: Final[str] = 'distributions'
     _graph_id: Final[str] = 'histogram'
     _dropdown_id: Final[str] = 'dropdown'
