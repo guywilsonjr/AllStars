@@ -20,9 +20,9 @@ def write_feats_to_file(file_name: str, feature_list: List[str]) -> None:
 
 def generate_featurelist_files(prefix: str, csv_fn: str):
     '''
-    Generates featurelist files for a given prefix after loading data from a csv file
+    Generates featurelist files for a given prefix after loading dataset from a csv file
     :param prefix: 'team' or 'player
-    :param csv_fn: Filename of csv to pull data from
+    :param csv_fn: Filename of csv to pull dataset from
     '''
 
     df = pd.read_csv(csv_fn)

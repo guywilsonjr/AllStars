@@ -8,7 +8,7 @@ from visual.tabs import DashTab
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 
-clustering_id = 'clustering-tab'
+clustering_id = 'clustering-_tab'
 clustering_label = 'Clustering'
 
 @dataclass

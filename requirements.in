@@ -1,5 +1,7 @@
+orjson # For fast dash
+pydantic
+Flask-Caching
 icecream
 plotly
 dash
-orjson # For fast dash
 sportsipy

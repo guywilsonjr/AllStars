@@ -4,25 +4,19 @@ import logging
 import sys
 # icream logging even better https://github.com/gruns/icecream
 from icecream import ic
-# For using typehints: https://docs.python.org/3/library/typing.html
-from typing import Dict, List
 import pandas as pd
 
-# Use Plotly and Dash for nice visuals
-# Plotly: https://plotly.com/python/
-# Dash: https://dash.plotly.com/installation
-# Same company makes Plotly and Dash. Plotly for Open source pretty plots. Dash for dashboards containing plots.
-import plotly as plotly
+# Use Plotly Dash for nice visuals
 from dash import dcc, Dash, html, Input, Output
-import plotly.express as px
-import plotly.graph_objects as go
-
+from data_tools import Dataset
 # Get current directory
-from visual.clustering import clustering_label, clustering_id
-from visual.distributions import distributions_id, distributions_label
+
+from visual.distributions import Distributions
+
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-initial_default_file_path = dir_path + '/../playerInfo2018.csv'
+initial_default_file_path = f'{dir_path }/../playerInfo2018.csv'
+default_feature: str = 'points'
 
 
 def setup_logging():
@@ -37,18 +31,6 @@ def setup_logging():
     return logger
 
 logger = setup_logging()
-df: pd.DataFrame = pd.read_csv(initial_default_file_path)
-
-
-"""
-Constants for Dash dropdown component
-https://dash.plotly.com/dash-core-components/dropdown
-"""
-dropdown_label_key: str = 'label'
-dropdown_value_key: str = 'value'
-
-
-default_feature: str = 'points'
 
 
 class MainApplication:
@@ -66,108 +48,61 @@ class MainApplication:
     When this class is created with the given dataframe and default column the plots are initialized, but not yet displayed
     They become displayed when someone calls this objects `app.run_server` function
     """
-    app: Dash
-    df: pd.DataFrame
-    dropdown_component: dcc.Dropdown
-    dropdown_options: List[Dict[str, str]]
-    dropdown_id: str = 'dropdown'
-    dropdown_selection: str
-    hist_id: str = 'hist'
+
+    data_file_path: str
+    dataset: Dataset
+    default_feature: str
+
+    distributions: Distributions = None
+    app: Dash = None
+
+    # Constructor
+    def __init__(self, data_file_path: str, default_feature: str) -> None:
+        self.data_file_path = data_file_path
+        self.default_feature = default_feature
+        self.setup()
+
+    def setup(self):
+        self.setup_app()
+        self.setup_dataset()
+        self.setup_distributions()
+        self.setup_layout()
+        self.setup_tab_switch_callback()
+
+    def setup_app(self):
+        self.default_feature = default_feature
+        self.app = Dash(__name__, serve_locally=True)
+        self.app.enable_dev_tools(debug=True)
+
+    def setup_dataset(self):
+        self.dataset = Dataset(self.app, pd.read_csv(self.data_file_path))
+
+    def setup_distributions(self):
+        self.distributions = Distributions(app=self.app, dataset=self.dataset, default_feature=self.default_feature)
+        self.distributions.setup()
 
     def setup_layout(self) -> None:
-        self.app = Dash(__name__)
-
-
-    def initialize(self, df: pd.DataFrame, default_col: str):
-        self.df = df
-        self.default_col = default_col
-        self.setup_dropdown()
-        self.setup_layout()
-        default_fig = px.histogram(df[self.default_col])
-
         self.app.layout = html.Div(
             children=[
                 html.Div(children=[
                     dcc.Tabs(
                         id="window",
-                        value='windowlabel',
-                        children=[
-                            dcc.Tab(
-                                id=distributions_id,
-                                label=distributions_label,
-                                children=[
-                                    dcc.Graph(
-                                        id='hist',
-                                        figure=default_fig),
-                                   self.dropdown_component]),
-                                ]
-                        ),
-                html.Div(id='tabs-content', children=[])])])
+                        children=[self.distributions.tab],
+                ),
+            html.Div(id='tabs-content', children=[])])])
 
-        # This is the trigger function that updates the graph on dropdown change
-        @self.app.callback(Output(component_id='hist', component_property='figure'), Input(component_id='dropdown', component_property='value'))
-        def trigger_update_on_dropdown_change(dropdown_selection: str) -> plotly.graph_objs.Figure:
-            self.dropdown_selection = dropdown_selection
-
-            ic(f'Updating output after receiving dropdown value: {dropdown_selection}')
-            return self.create_histogram(dropdown_selection)
-
-        @self.app.callback(Output(component_id='hist', component_property='style'),
-                           Input(component_id='window', component_property='value'))
-        def trigger_update_on_tab_switch(tab: str) -> plotly.graph_objs.Figure:
-            default_fig = px.histogram(df[self.default_col])
-
-            ic(f'Updating output after receiving tab value: {tab}')
-            return dcc.Graph(figure=default_fig)
+    def setup_tab_switch_callback(self):
+        @self.app.callback(Output('window', 'children'),
+                           Input('distributions', 'value'))
+        def render_content(tab):
+            if tab:
+                orderd_html_elements = [html.H1(self.distributions.label, style={'text-align': 'center'})] + tab.children
+            else:
+                orderd_html_elements = [html.H1(self.distributions.label, style={'text-align': 'center'})] + self.distributions.tab.children
+            return html.Div(orderd_html_elements)
 
 
-    def setup_dropdown(self) -> None:
-        """
-        See: https://dash.plotly.com/dash-core-components/dropdown
-
-        Setup dropdown options as list of dictionary like:
-        [{'label': 'points', 'value': 'points'}}
-        using list comprehension
-        https://www.geeksforgeeks.org/python-list-comprehension/
-        https://docs.python.org/3/library/functions.html?highlight=enumerate#enumerate
-
-        """
-        self.dropdown_options: List[Dict[str, str]] = [{dropdown_label_key: col, dropdown_value_key: col} for col in df.columns]
-        self.dropdown_component = dcc.Dropdown(
-            id=self.dropdown_id,
-            value=self.default_col,
-            options=self.dropdown_options,
-            persistence=True
-        )
-
-    def create_histogram(self, col: str, percentile: int = 66):
-        '''
-        Create Histogram
-        Currently not using percentile parameter
-        Splits df into halfs and add traces
-        '''
-        # TODO: create variable size partitions
-        column_data: pd.Series = self.df[col]
-        hist_title = f'{col} Distribution'.replace('_', ' ').title()
-
-        half_quantile = column_data.quantile(.5)
-        first_half = df[df[col] < half_quantile][col]
-        second_half = df[df[col] >= half_quantile][col]
-
-        fig = go.Figure()
-        fig.add_trace(go.Histogram(x=first_half))
-        fig.add_trace(go.Histogram(x=second_half))
-
-        fig.update_layout(barmode='stack')
-        return fig
-
-    # Constructor
-    def __init__(self, df: pd.DataFrame, default_col: str) -> None:
-        self.initialize(df, default_col)
-
-
-graph = MainApplication(df, default_feature)
-graph.app.css.config.serve_locally = True
+graph = MainApplication(initial_default_file_path, default_feature)
 
 # Unnecessary, but good practice. See stack overflow for why
 if __name__ == '__main__':
