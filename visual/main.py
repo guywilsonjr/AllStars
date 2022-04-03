@@ -96,9 +96,9 @@ class MainApplication:
                            Input('histograms', 'value'))
         def render_content(tab):
             if tab:
-                orderd_html_elements = [html.H2(self.histograms.label, style={'text-align': 'center'})] + tab.children
+                orderd_html_elements = [html.H3(self.histograms.label, style={'text-align': 'center'})] + tab.children
             else:
-                orderd_html_elements = [html.H2(self.histograms.label, style={'text-align': 'center'})] + self.histograms.tab.children
+                orderd_html_elements = [html.H3(self.histograms.label, style={'text-align': 'center'})] + self.histograms.tab.children
             return html.Div(orderd_html_elements)
 
 

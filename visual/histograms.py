@@ -1,5 +1,6 @@
 from typing import List, Dict, Final
 import plotly
+from dash.html import Title
 from icecream import ic
 from pydantic import BaseModel, PrivateAttr
 import pandas as pd
@@ -7,9 +8,9 @@ import plotly.graph_objects as go
 from dash import dcc, Dash, Output, Input
 
 from data_tools import Dataset
+from base_visual import BaseVisual
 
-
-class Histograms(BaseModel):
+class Histograms(BaseVisual, BaseModel):
     class Config:
         arbitrary_types_allowed = True
     app: Dash
@@ -68,7 +69,7 @@ class Histograms(BaseModel):
         '''
         # TODO: create variable size partitions
         column_data: pd.Series = self.dataset.get_df_by_feature(col)
-        hist_title = f'{col}'.replace('_', ' ').title()
+        hist_title = {'text': f'{col}'.replace('_', ' ').title(), 'font':{'size': 22}}
 
         half_quantile = column_data.quantile(.5)
         first_half = self.dataset.df[column_data < half_quantile][col]
