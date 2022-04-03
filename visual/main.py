@@ -11,7 +11,7 @@ from dash import dcc, Dash, html, Input, Output
 from data_tools import Dataset
 # Get current directory
 
-from visual.distributions import Distributions
+from visual.histograms import Histograms
 
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -53,7 +53,7 @@ class MainApplication:
     dataset: Dataset
     default_feature: str
 
-    distributions: Distributions = None
+    histograms: Histograms = None
     app: Dash = None
 
     # Constructor
@@ -65,7 +65,7 @@ class MainApplication:
     def setup(self):
         self.setup_app()
         self.setup_dataset()
-        self.setup_distributions()
+        self.setup_histograms()
         self.setup_layout()
         self.setup_tab_switch_callback()
 
@@ -77,9 +77,9 @@ class MainApplication:
     def setup_dataset(self):
         self.dataset = Dataset(self.app, pd.read_csv(self.data_file_path))
 
-    def setup_distributions(self):
-        self.distributions = Distributions(app=self.app, dataset=self.dataset, default_feature=self.default_feature)
-        self.distributions.setup()
+    def setup_histograms(self):
+        self.histograms = Histograms(app=self.app, dataset=self.dataset, default_feature=self.default_feature)
+        self.histograms.setup()
 
     def setup_layout(self) -> None:
         self.app.layout = html.Div(
@@ -87,18 +87,18 @@ class MainApplication:
                 html.Div(children=[
                     dcc.Tabs(
                         id="window",
-                        children=[self.distributions.tab],
+                        children=[self.histograms.tab],
                 ),
             html.Div(id='tabs-content', children=[])])])
 
     def setup_tab_switch_callback(self):
         @self.app.callback(Output('window', 'children'),
-                           Input('distributions', 'value'))
+                           Input('histograms', 'value'))
         def render_content(tab):
             if tab:
-                orderd_html_elements = [html.H1(self.distributions.label, style={'text-align': 'center'})] + tab.children
+                orderd_html_elements = [html.H1(self.histograms.label, style={'text-align': 'center'})] + tab.children
             else:
-                orderd_html_elements = [html.H1(self.distributions.label, style={'text-align': 'center'})] + self.distributions.tab.children
+                orderd_html_elements = [html.H1(self.histograms.label, style={'text-align': 'center'})] + self.histograms.tab.children
             return html.Div(orderd_html_elements)
 
 

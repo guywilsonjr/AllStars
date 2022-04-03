@@ -9,7 +9,7 @@ from dash import dcc, Dash, Output, Input
 from data_tools import Dataset
 
 
-class Distributions(BaseModel):
+class Histograms(BaseModel):
     class Config:
         arbitrary_types_allowed = True
     app: Dash
@@ -29,7 +29,7 @@ class Distributions(BaseModel):
     '''
 
     _label: Final[str] = 'Histograms'
-    _tab_id: Final[str] = 'distributions'
+    _tab_id: Final[str] = 'histograms'
     _graph_id: Final[str] = 'histogram'
     _dropdown_id: Final[str] = 'dropdown'
     _dropdown_label_key: Final[str] = 'label'
@@ -68,17 +68,18 @@ class Distributions(BaseModel):
         '''
         # TODO: create variable size partitions
         column_data: pd.Series = self.dataset.get_df_by_feature(col)
-        hist_title = f'{col} Distribution'.replace('_', ' ').title()
+        hist_title = f'{col}'.replace('_', ' ').title()
 
         half_quantile = column_data.quantile(.5)
         first_half = self.dataset.df[column_data < half_quantile][col]
         second_half = self.dataset.df[column_data >= half_quantile][col]
 
-        fig = go.Figure()
-        fig.add_trace(go.Histogram(x=first_half))
-        fig.add_trace(go.Histogram(x=second_half))
 
-        fig.update_layout(barmode='stack')
+        fig = go.Figure()
+        fig.add_trace(go.Histogram(x=first_half, name='Bottom 50%'))
+        fig.add_trace(go.Histogram(x=second_half, name='Top 50%'))
+
+        fig.update_layout(barmode='stack', title=hist_title, title_x=0.5, legend=dict())
         self._fig = fig
         return self._fig
 
