@@ -6,8 +6,8 @@ import pandas as pd
 import plotly.graph_objects as go
 from dash import dcc, Dash, Output, Input, html
 
-from data_tools import Dataset
-from base_visual import BaseVisual
+from .data_tools import Dataset
+from .base_visual import BaseVisual
 
 
 class Histograms(BaseModel, BaseVisual):

@@ -12,10 +12,10 @@ import pandas as pd
 from dash import dcc, Dash, html, Input, Output
 from data_tools import Dataset
 # Get current directory
-from visual.base_visual import BaseVisual
-from visual.clustering import Clustering
+from .base_visual import BaseVisual
+from .clustering import Clustering
 
-from visual.histograms import Histograms
+from .histograms import Histograms
 
 
 dir_path = os.path.dirname(os.path.realpath(__file__))

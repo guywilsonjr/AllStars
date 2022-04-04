@@ -4,8 +4,8 @@ import plotly.figure_factory as ff
 import plotly.graph_objs as go
 from dash import dcc, Dash
 
-from data_tools import Dataset
-from visual.base_visual import BaseVisual
+from .data_tools import Dataset
+from .base_visual import BaseVisual
 
 
 clustering_id = 'clustering-_tab'
