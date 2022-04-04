@@ -95,7 +95,7 @@ class MainApplication:
     def setup_clustering(self):
         self.clustering = Clustering(app=self.app, dataset=self.dataset)
         self.clustering.setup()
-        #self.tabs.append(self.clustering.tab)
+        self.tabs.append(self.clustering.tab)
 
     def setup_layout(self) -> None:
         self.app.layout = html.Div(
@@ -104,21 +104,15 @@ class MainApplication:
                     dcc.Tabs(
                         id="window",
                         children=self.tabs,
+                        value=self.histograms.tab_id
                 ),
             html.Div(id='tabs-content', children=[])])])
 
     def setup_tab_switch_callback(self):
-        @self.app.callback(Output('window', 'children'),
-                           Input(str(self.histograms.tab_id), 'value'), prevent_initial_call=True)
+        @self.app.callback(Output('window', 'value'),
+                           Input(str(self.histograms.tab_id), 'value'))
         def render_content(tab):
-            if tab:
-                orderd_html_elements = tab.children
-            else:
-                tab = tab
-
-            orderd_html_elements = self.histograms.tab.children
-
-            return html.Div(orderd_html_elements)
+            return tab.tab_id if tab else self.histograms.tab_id
 
 
 graph = MainApplication(initial_default_file_path, default_feature)

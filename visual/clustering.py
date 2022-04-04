@@ -1,10 +1,9 @@
 from typing import Final
-
-import pandas as pd
-from dash import dcc, Dash
 from pydantic import PrivateAttr, BaseModel
 import plotly.figure_factory as ff
 import plotly.graph_objs as go
+from dash import dcc, Dash
+
 from data_tools import Dataset
 from visual.base_visual import BaseVisual
 

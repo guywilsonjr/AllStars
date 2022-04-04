@@ -10,7 +10,7 @@ from data_tools import Dataset
 from base_visual import BaseVisual
 
 
-class Histograms(BaseModel,BaseVisual):
+class Histograms(BaseModel, BaseVisual):
     class Config:
         arbitrary_types_allowed = True
     app: Dash
@@ -40,46 +40,10 @@ class Histograms(BaseModel,BaseVisual):
     def setup(self) -> None:
         self.setup_tab()
 
-    def setup_graph(self) -> None:
-        self.create_figure(self.default_feature)
-        self._graph = dcc.Graph(
-            id=self._graph_id,
-            figure=self._fig)
-
-    def create_figure(self, col: str, percentile: int = 50) -> go.Figure:
-        '''
-        Create Histogram
-        Currently not using percentile parameter
-        Splits dataset into halfs and add traces
-        '''
-        # TODO: create variable size partitions
-        column_data: pd.Series = self.dataset.get_df_by_feature(col)
-        hist_title = {'text': f'{col}'.replace('_', ' ').title(), 'font':{'size': 22}}
-
-        half_quantile = column_data.quantile(.5)
-        first_half = self.dataset.taste(col)
-        second_half = self.dataset.taste(col)
-
-
-        self._fig = go.Figure()
-        self._fig.add_trace(go.Histogram(x=first_half, name='Bottom 50%'))
-        self._fig.add_trace(go.Histogram(x=second_half, name='Top 50%'))
-
-        self._fig.update_layout(barmode='stack', title_x=0.5, legend=dict())
-
-    def setup_data_load_on_dropdown_selection(self) -> None:
-        # This is the trigger function that updates the graph on dropdown change
-        @self.app.callback(Output(component_id=self._graph_id, component_property=self._graph_update_prop),
-                           Input(component_id=self._dropdown_id, component_property=self._dropdown_value_key))
-        def trigger_update_on_dropdown_change(dropdown_selection: str) -> plotly.graph_objs.Figure:
-            self._selected_dropdown = dropdown_selection
-
-            ic(f'Updating output after receiving dropdown value: {self._selected_dropdown}')
-            return self.create_figure(self._selected_dropdown)
-
     def setup_tab(self) -> None:
         """
         The Tab object encapsulates the histogram and dropdown into one portable component
+
         """
         self._setup_dropdown()
         self.setup_graph()
@@ -90,6 +54,21 @@ class Histograms(BaseModel,BaseVisual):
                 html.H3(self._label, style={'textAlign': 'center'}),
                 self._graph,
                 self._dropdown_component])
+
+        self.setup_ui_triggers()
+
+    def setup_graph(self) -> None:
+        '''
+        **NOTE** Due to the callback this must be run prior to _setup_dropdown
+        '''
+        self.setup_fig(self.default_feature)
+        self._graph = dcc.Graph(
+            id=self._graph_id,
+            figure=self._fig)
+
+    def setup_fig(self, col) -> None:
+        self._fig = self.create_fig(col)
+
 
     def _setup_dropdown(self) -> None:
         """
@@ -107,9 +86,43 @@ class Histograms(BaseModel,BaseVisual):
             id=self._dropdown_id,
             value=self.default_feature,
             options=self._dropdown_options,
-            persistence=True
+            persistence=False
         )
+
+
+    def create_fig(self, col: str, percentile: int = 50) -> go.Figure:
+        '''
+        Create Histogram
+        Currently not using percentile parameter
+        Splits dataset into halfs and add traces
+        '''
+        # TODO: create variable size partitions
+        column_data: pd.Series = self.dataset.get_df_by_feature(col)
+        hist_title = {'text': f'{col}'.replace('_', ' ').title(), 'font':{'size': 22}}
+
+        half_quantile = column_data.quantile(.5)
+        first_half = self.dataset.taste(col)
+        second_half = self.dataset.taste(col)
+
+
+        fig = go.Figure()
+        fig.add_trace(go.Histogram(x=first_half, name='Bottom 50%'))
+        fig.add_trace(go.Histogram(x=second_half, name='Top 50%'))
+        fig.update_layout(barmode='stack', title_x=0.5, legend=dict())
+
+        return fig
+    def setup_ui_triggers(self):
         self.setup_data_load_on_dropdown_selection()
+
+    def setup_data_load_on_dropdown_selection(self) -> None:
+        # This is the trigger function that updates the graph on dropdown change
+        @self.app.callback(Output(component_id=self._graph_id, component_property=self._graph_update_prop),
+                           Input(component_id=self._dropdown_id, component_property=self._dropdown_value_key))
+        def trigger_update_on_dropdown_change(dropdown_selection: str) -> plotly.graph_objs.Figure:
+            self._selected_dropdown = dropdown_selection
+
+            ic(f'Updating output after receiving dropdown value: {self._selected_dropdown}')
+            return self.create_fig(self._selected_dropdown)
 
 
 
