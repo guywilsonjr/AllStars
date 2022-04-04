@@ -27,7 +27,6 @@ class Dataset:
 
     def __init__(self, app: Dash, df: pd.DataFrame):
         self.cache_key_prefix = self.cache_key_prefix_fmt.format(app.config.name)
-        print(self.cache_key_prefix)
         self.cache = Cache(app.server,  config={"CACHE_TYPE": "SimpleCache", 'CACHE_KEY_PREFIX': self.cache_key_prefix})
         self.df = df
 
