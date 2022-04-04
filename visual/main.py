@@ -116,11 +116,11 @@ class MainApplication:
 
 
 graph = MainApplication(initial_default_file_path, default_feature)
+server = graph.app.server
 
 # Unnecessary, but good practice. See stack overflow for why
 if __name__ == '__main__':
     graph.app.run_server(debug=True, port=8080)
-else:
-    server = graph.app.server
+
 
 
