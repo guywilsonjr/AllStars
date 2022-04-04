@@ -1,23 +1,32 @@
 from abc import abstractmethod
-
+from pydantic import PrivateAttr
+import plotly.graph_objects as go
 from dash import dcc
 
 
 class BaseVisual:
+
+    _fig: go.Figure = PrivateAttr()
+    _graph = PrivateAttr()
+    _tab: dcc.Tab = PrivateAttr()
+    _tab_id: str
+    _label: str
     '''
     Abstract base class for Visuals
     '''
+
     @property
-    @abstractmethod
     def tab(self) -> dcc.Tab:
-        pass
+        return self._tab
 
     @property
-    @abstractmethod
     def tab_id(self) -> str:
-        pass
+        return self._tab_id
 
     @property
-    @abstractmethod
     def label(self) -> str:
-        pass
+        return self._label
+
+    @abstractmethod
+    def setup(self) -> str:
+        raise NotImplementedError

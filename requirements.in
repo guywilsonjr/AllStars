@@ -1,7 +1,8 @@
 orjson # For fast dash
+icecream
 pydantic
 Flask-Caching
-icecream
+scipy # for plotly clustering
 plotly
 dash
 sportsipy

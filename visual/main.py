@@ -3,6 +3,8 @@ import os
 import logging
 import sys
 # icream logging even better https://github.com/gruns/icecream
+from typing import List, Final
+
 from icecream import ic
 import pandas as pd
 
@@ -10,6 +12,8 @@ import pandas as pd
 from dash import dcc, Dash, html, Input, Output
 from data_tools import Dataset
 # Get current directory
+from visual.base_visual import BaseVisual
+from visual.clustering import Clustering
 
 from visual.histograms import Histograms
 
@@ -52,9 +56,11 @@ class MainApplication:
     data_file_path: str
     dataset: Dataset
     default_feature: str
-
-    histograms: Histograms = None
-    app: Dash = None
+    clustering: Clustering
+    histograms: Histograms
+    app: Dash
+    app_name: Final[str] = 'Dashboard'
+    tabs: List[dcc.Tab] = []
 
     # Constructor
     def __init__(self, data_file_path: str, default_feature: str) -> None:
@@ -65,40 +71,53 @@ class MainApplication:
     def setup(self):
         self.setup_app()
         self.setup_dataset()
-        self.setup_histograms()
-        self.setup_layout()
+        self.setup_tabs()
         self.setup_tab_switch_callback()
+        self.setup_layout()
 
     def setup_app(self):
         self.default_feature = default_feature
-        self.app = Dash(__name__, serve_locally=True)
+        self.app = Dash(self.app_name, compress=False, serve_locally=True)
         self.app.enable_dev_tools(debug=True)
 
     def setup_dataset(self):
         self.dataset = Dataset(self.app, pd.read_csv(self.data_file_path))
 
+    def setup_tabs(self):
+        self.setup_histograms()
+        self.setup_clustering()
+
     def setup_histograms(self):
         self.histograms = Histograms(app=self.app, dataset=self.dataset, default_feature=self.default_feature)
         self.histograms.setup()
+        self.tabs.append(self.histograms.tab)
+
+    def setup_clustering(self):
+        self.clustering = Clustering(app=self.app, dataset=self.dataset)
+        self.clustering.setup()
+        #self.tabs.append(self.clustering.tab)
 
     def setup_layout(self) -> None:
         self.app.layout = html.Div(
-            children=[html.H1('Dashboard', style={'text-align': 'center'}),
+            children=[html.H1('Dashboard', style={'textAlign': 'center'}),
                 html.Div(children=[
                     dcc.Tabs(
                         id="window",
-                        children=[self.histograms.tab],
+                        children=self.tabs,
                 ),
             html.Div(id='tabs-content', children=[])])])
 
     def setup_tab_switch_callback(self):
         @self.app.callback(Output('window', 'children'),
-                           Input('histograms', 'value'))
+                           Input(str(self.histograms.tab_id), 'value'), prevent_initial_call=True)
         def render_content(tab):
             if tab:
-                orderd_html_elements = [html.H3(self.histograms.label, style={'text-align': 'center'})] + tab.children
+                orderd_html_elements = tab.children
             else:
-                orderd_html_elements = [html.H3(self.histograms.label, style={'text-align': 'center'})] + self.histograms.tab.children
+                tab = tab
+
+            orderd_html_elements = self.histograms.tab.children
+
             return html.Div(orderd_html_elements)
 
 
