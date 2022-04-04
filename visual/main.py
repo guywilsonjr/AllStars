@@ -11,12 +11,11 @@ import pandas as pd
 # Use Plotly Dash for nice visuals
 from dash import dcc, Dash, html, Input, Output
 # Get current directory
-from .data_tools import Dataset
+from data_tools import Dataset
 
-from .base_visual import BaseVisual
-from .clustering import Clustering
+from clustering import Clustering
 
-from .histograms import Histograms
+from histograms import Histograms
 
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
