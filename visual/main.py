@@ -10,8 +10,9 @@ import pandas as pd
 
 # Use Plotly Dash for nice visuals
 from dash import dcc, Dash, html, Input, Output
-from data_tools import Dataset
 # Get current directory
+from .data_tools import Dataset
+
 from .base_visual import BaseVisual
 from .clustering import Clustering
 
