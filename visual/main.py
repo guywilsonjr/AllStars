@@ -61,6 +61,7 @@ class MainApplication:
     app: Dash
     app_name: Final[str] = 'Dashboard'
     tabs: List[dcc.Tab] = []
+    external_stylesheets: Final[List[str]] = []
 
     # Constructor
     def __init__(self, data_file_path: str, default_feature: str) -> None:
@@ -77,7 +78,11 @@ class MainApplication:
 
     def setup_app(self):
         self.default_feature = default_feature
-        self.app = Dash(self.app_name, compress=False, serve_locally=True)
+        self.app = Dash(
+            self.app_name,
+            compress=False,
+            serve_locally=True,
+            external_stylesheets=self.external_stylesheets)
         self.app.enable_dev_tools(debug=True)
 
     def setup_dataset(self):
