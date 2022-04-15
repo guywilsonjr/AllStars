@@ -15,8 +15,6 @@ years = tuple(range(2010, 2021))
 start_year = years[0]
 end_year = years[-1]
 
-ncaa_career_fn = f'ncaa-player-career-stats-{start_year}-{end_year}.csv'
-ncaa_players_yearly_fn = f'ncaa-players-season-stats-{start_year}-{end_year}.csv'
 player_yearly_primary_key = ['player_id', 'team_abbreviation', 'season']
 
 
@@ -35,6 +33,11 @@ def run():
     for year in years:
         process_year(year)
 
+        ncaa_career_fn = f'ncaa-player-career-stats-{start_year}-{year}.csv'
+        ncaa_players_yearly_fn = f'ncaa-players-season-stats-{start_year}-{year}.csv'
+        pd.concat(all_player_dfs).to_csv(ncaa_players_yearly_fn)
+        pd.concat(all_career_dfs).to_csv(ncaa_career_fn)
+
     sorted_seasons = sorted(all_seasons)
     season_abs_year_map = {season: abs_year for abs_year, season in enumerate(sorted_seasons)}
 
@@ -42,8 +45,6 @@ def run():
         df['abs_season'] = [season_abs_year_map[pkey[2]] for pkey in df.index.tolist()]
         df['abs_season_order'] = df['abs_season'] + df['season_order']
 
-    pd.concat(all_player_dfs).to_csv(ncaa_players_yearly_fn)
-    pd.concat(all_career_dfs).to_csv(ncaa_career_fn)
 
 
 @retry(
