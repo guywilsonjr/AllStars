@@ -1,10 +1,12 @@
+import logging
 from typing import List, Tuple, Set
-
 from sportsipy.ncaab.roster import Player
 from sportsipy.ncaab.teams import Team, Teams
 import pandas as pd
+from tenacity import retry, wait_exponential, before_log, stop_after_attempt, retry_if_exception_type
 
-
+logging.basicConfig()
+logger = logging.getLogger()
 all_player_dfs: List[pd.DataFrame] = []
 all_career_dfs: List[pd.DataFrame] = []
 all_seasons: Set[int] = set()
@@ -44,6 +46,11 @@ def run():
     pd.concat(all_career_dfs).to_csv(ncaa_career_fn)
 
 
+@retry(
+    retry=retry_if_exception_type(IOError),
+    wait=wait_exponential(min=30, max=60),
+    stop=(stop_after_attempt(5)),
+    before=before_log(logger, logging.INFO))
 def process_year(year: int):
     print('Pulling data for year: ', year)
     teams_this_year = Teams(year)
@@ -51,12 +58,22 @@ def process_year(year: int):
         process_team(team)
 
 
+@retry(
+    retry=retry_if_exception_type(IOError),
+    wait=wait_exponential(min=30, max=60),
+    stop=(stop_after_attempt(5)),
+    before=before_log(logger, logging.INFO))
 def process_team(team: Team):
     print('Pulling data for team: ', team)
     for player in team.roster.players:
         process_player(player)
 
 
+@retry(
+    retry=retry_if_exception_type(IOError),
+    wait=wait_exponential(min=30, max=60),
+    stop=(stop_after_attempt(5)),
+    before=before_log(logger, logging.INFO))
 def process_player(player: Player):
     player_id = player.player_id
     print('Processing data for player: ', player_id)
