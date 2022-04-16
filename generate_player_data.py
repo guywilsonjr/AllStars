@@ -26,10 +26,7 @@ all_seasons: Set[int] = set()
 s3_bucket_name = 'nbarisingallstars'
 
 years = tuple(range(2010, 2021))
-num_years = len(years)
-num_proc_workers = num_cpus - 1
-num_workers_per_year = 400 // (num_proc_workers/num_years)
-start_year = years[0]
+\start_year = years[0]
 ncaa_team_yearly_raw_fn_fmt = 'data/ncaa/team/yearly/{}/raw/ncaa-{}-stats.csv'
 
 end_year = years[-1]
@@ -38,11 +35,14 @@ player_yearly_primary_key = ['player_id', 'team_abbreviation', 'season']
 pre_existing_files = []
 num_years = len(years)
 
+num_proc_workers = num_cpus - 1
+num_workers_per_year = 400 // (num_proc_workers/num_years)
+
 
 def load_existing_files():
     bucket = boto3.resource('s3').Bucket(s3_bucket_name)
     existing_objs = bucket.objects.all()
-    pre_existing_files.extend([str(obj.key) for obj in existing_objs])
+    return set([str(obj.key) for obj in existing_objs])
 
 
 load_existing_files()
@@ -54,14 +54,13 @@ def upload_file_to_s3_if_not_exists(
         csv_str: str,
         msg_if_exists: str,
         pre_msg: str,
-        post_msg: str,
-        existing_files
-):
+        post_msg: str):
 
 
     s3 = boto3.resource("s3")
 
     bucket = s3.Bucket(s3_bucket_name)
+    existing_files = load_existing_files()
     if fn in existing_files:
         print(msg_if_exists)
         return
@@ -82,7 +81,6 @@ def upload_player_data_if_not_exists(
         yearly_df: pd.DataFrame,
         career_df: pd.DataFrame,
         raw_df: pd.DataFrame,
-        existing_files
         ):
     ncaa_career_fn_fmt = 'data/ncaa/player/career/ncaa-player-career-stats-{}.csv'
     ncaa_players_yearly_fn_fmt = 'data/ncaa/player/yearly/ncaa-players-season-stats-{}.csv'
@@ -106,6 +104,7 @@ def upload_player_data_if_not_exists(
     raw_pre_msg = pre_upload_msg_fmt.format('Raw', player_id)
     raw_post_msg = post_upload_msg_fmt.format('Raw', player_id)
 
+    existing_files = load_existing_files()
     career_exists = career_fn in existing_files
     yearly_exists = yearly_fn in existing_files
     raw_exists = career_fn in existing_files
@@ -120,39 +119,32 @@ def upload_player_data_if_not_exists(
         'csv_str': career_df.to_csv(),
         'msg_if_exists': existing_career_msg,
         'pre_msg': career_pre_msg,
-        'post_msg': career_post_msg,
-        'existing_files': existing_files}
-        )
+        'post_msg': career_post_msg})
     if not yearly_exists:
         coro_args.append({
             'fn': yearly_fn,
             'csv_str': yearly_df.to_csv(),
             'msg_if_exists': existing_yearly_msg,
             'pre_msg': yearly_pre_msg,
-            'post_msg': yearly_post_msg,
-            'existing_files': existing_files
-        })
+            'post_msg': yearly_post_msg})
     if not raw_exists:
         coro_args.append({
             'fn': raw_fn,
             'csv_str': raw_df.to_csv(),
             'msg_if_exists': existing_raw_msg,
             'pre_msg': raw_pre_msg,
-            'post_msg': raw_post_msg,
-            'existing_files': existing_files}
-        )
+            'post_msg': raw_post_msg})
     return [upload_file_to_s3_if_not_exists(**coro_arg_set) for coro_arg_set in coro_args]
 
 
-def upload_team_yearlydf_if_not_exists(team: str, df: pd.DataFrame, year: int, existing_files):
+def upload_team_yearlydf_if_not_exists(team: str, df: pd.DataFrame, year: int):
     ncaa_team_yearly_fn = ncaa_team_yearly_raw_fn_fmt.format(year, team).replace(' ', '')
     return upload_file_to_s3_if_not_exists(
         ncaa_team_yearly_fn,
         df.to_csv(),
         f'File: {ncaa_team_yearly_fn} already exists',
         f'Uploading File: {ncaa_team_yearly_fn}',
-        f'Upload Complete for file: {ncaa_team_yearly_fn}',
-        existing_files
+        f'Upload Complete for file: {ncaa_team_yearly_fn}'
     )
 
 
@@ -175,8 +167,7 @@ def run():
 
             print('Threadpool created')
             years = [[i] for i in range(2010, 2021)]
-            existing_files = manager.list([pre_existing_files])
-            ress = executor.starmap(process_year, years, existing_files)
+            ress = executor.starmap(process_year, years)
             for res in ress:
                 print(res)
 
@@ -198,7 +189,7 @@ def run():
     wait=wait_exponential(min=30, max=60),
     stop=(stop_after_attempt(5)),
     before=before_log(logger, logging.INFO))
-def process_year(year: str, existing_files):
+def process_year(year: str):
     year = int(year)
     jitter = 0
     teams_this_year = Teams(year)
@@ -208,7 +199,7 @@ def process_year(year: str, existing_files):
     with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers_per_year) as executor:
         print('Threadpool created for year: ', year)
 
-        team_year_tups = [(team, year, existing_files) for team in teams_this_year]
+        team_year_tups = [(team, year) for team in teams_this_year]
         print(team_year_tups)
         ress = executor.map(process_team, team_year_tups)
         for res in ress:
@@ -225,8 +216,8 @@ def process_year(year: str, existing_files):
 def process_team(team_year: Tuple[Team, int]):
     team = team_year[0]
     year = team_year[1]
-    existing_files = team_year[2]
     ncaa_team_yearly_fn = ncaa_team_yearly_raw_fn_fmt.format(year, team).replace(' ', '')
+    existing_files = load_existing_files()
     if ncaa_team_yearly_fn in existing_files:
         msg = f'File: {ncaa_team_yearly_fn}  already exists. Skipping'
         print(msg)
@@ -234,10 +225,10 @@ def process_team(team_year: Tuple[Team, int]):
     print('Pulling data for team: ', team)
     jitter = 1
     for player in team.roster.players:
-        process_player(player, existing_files)
+        process_player(player)
 
     print('Uploading Team DF data')
-    upload_team_yearlydf_if_not_exists(team.name, team.dataframe, year, existing_files)
+    upload_team_yearlydf_if_not_exists(team.name, team.dataframe, year)
     print('Proccesing data for team: ', team, 'Complete')
 
 
@@ -246,8 +237,9 @@ def process_team(team_year: Tuple[Team, int]):
     wait=wait_exponential(min=30, max=60),
     stop=(stop_after_attempt(5)),
     before=before_log(logger, logging.INFO))
-def process_player(player: Player, existing_files):
+def process_player(player: Player):
     player_id = player.player_id
+    existing_files = load_existing_files()
     for file in existing_files:
         if player_id in file:
             return
@@ -269,11 +261,11 @@ def process_player(player: Player, existing_files):
 
     player_seasons: Tuple[str, ...] = tuple(sorted(player_seasons))
     player_years: Tuple[int, ...] = tuple(sorted(player_years))
-    player_df = get_updated_player_df(player_df, player_seasons, )
+    player_df = get_updated_player_df(player_df, player_seasons)
     player_df = player_df.set_index(player_yearly_primary_key, verify_integrity=True)
     player_career_df = get_updated_career_df(player_career_df, player_seasons, player_years)
     print('Uploading player data for player: ', player_id)
-    upload_player_data_if_not_exists(player_id, player_df, player_career_df, raw_df, existing_files)
+    upload_player_data_if_not_exists(player_id, player_df, player_career_df, raw_df)
     print('Proccesing player: ', player_id, 'Complete')
 
 
