@@ -26,7 +26,7 @@ all_seasons: Set[int] = set()
 s3_bucket_name = 'nbarisingallstars'
 
 years = tuple(range(2010, 2021))
-\start_year = years[0]
+start_year = years[0]
 ncaa_team_yearly_raw_fn_fmt = 'data/ncaa/team/yearly/{}/raw/ncaa-{}-stats.csv'
 
 end_year = years[-1]
