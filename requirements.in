@@ -2,6 +2,7 @@ orjson # For fast dash
 icecream
 pydantic
 aioboto3
+aiofile
 Flask-Caching
 scipy # for plotly clustering
 plotly
