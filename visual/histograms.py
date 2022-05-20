@@ -106,9 +106,9 @@ class Histograms(BaseModel, BaseVisual):
 
 
         fig = go.Figure()
-        fig.add_trace(go.Histogram(x=first_half, name='Bottom 50%'))
-        fig.add_trace(go.Histogram(x=second_half, name='Top 50%'))
-        fig.update_layout(barmode='stack', title_x=0.5, legend=dict())
+        fig.add_trace(go.Histogram(x=self.dataset.df[col], name='Bottom 50%'))
+        #fig.add_trace(go.Histogram(x=second_half, name='Top 50%'))
+        #fig.update_layout(barmode='stack', title_x=0.5, legend=dict())
 
         return fig
     def setup_ui_triggers(self):
