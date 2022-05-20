@@ -5,7 +5,7 @@ from pydantic import BaseModel, PrivateAttr
 import pandas as pd
 import plotly.graph_objects as go
 from dash import dcc, Dash, Output, Input, html
-
+import plotly.express as px
 from data_tools import Dataset
 from base_visual import BaseVisual
 
@@ -106,9 +106,10 @@ class Histograms(BaseModel, BaseVisual):
 
 
         fig = go.Figure()
-        fig.add_trace(go.Histogram(x=self.dataset.df[col], name='Bottom 50%'))
+        fig=px.histogram( x=self.dataset.df[col], title=hist_title['text'])
         #fig.add_trace(go.Histogram(x=second_half, name='Top 50%'))
         #fig.update_layout(barmode='stack', title_x=0.5, legend=dict())
+        #fig.show()
 
         return fig
     def setup_ui_triggers(self):
